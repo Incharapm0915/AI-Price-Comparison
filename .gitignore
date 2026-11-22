@@ -1,0 +1,79 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Env files (never commit real secrets)
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Playwright
+backend/test-results/
+backend/playwright-report/
+
+# Next.js
+frontend/.next/
+frontend/out/
+frontend/next-env.d.ts
+
+# Build output
+dist/
+build/
+
+# Logs
+*.log
+npm-debug.log*
+logs/
+/tmp/uvicorn.log
+
+# Editor/OS
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/extensions.json
+.idea/
+
+# Testing / coverage
+coverage/
+
+# Alembic (SQLite fallback db, if ever used locally)
+*.db
+
+# Misc
+*.tsbuildinfo
+.cache/
+
+# Archived previous (Node/Express/Prisma + Vite) build — kept for reference,
+# not part of the active app.
+_archive_node_vite_build/
+
+# --- added for publishing ---
+node_modules/
+.venv/
+venv/
+env/
+__pycache__/
+*.pyc
+.env
+.env.*
+!.env.example
+*.zip
+.claude/
+.pytest_cache/
+.next/
+dist/
+build/
+*.log
+.DS_Store

@@ -1,0 +1,45 @@
+# Pinned to versions actually installed and test-verified in this project
+# (`pytest` green against every version below). Re-run `uv pip install -r
+# requirements.txt` after editing.
+
+# ── Phase 1: core API ────────────────────────────────────────────────────
+fastapi==0.141.1
+uvicorn[standard]==0.52.1
+pydantic==2.13.4
+pydantic-settings==2.15.0
+python-dotenv==1.2.2
+email-validator==2.3.0
+
+# ── Phase 2: database ────────────────────────────────────────────────────
+sqlalchemy==2.0.51
+psycopg[binary]==3.3.4
+alembic==1.19.1
+pgvector==0.5.0
+
+# ── Redis / caching ──────────────────────────────────────────────────────
+redis==8.1.0
+
+# ── Phase 4-5: normalization & matching ─────────────────────────────────
+rapidfuzz==3.14.5
+sentence-transformers==5.7.0
+scikit-learn==1.9.0
+pandas==3.0.5
+numpy==2.4.6
+
+# ── Phase 6-7: web automation & parsing ─────────────────────────────────
+playwright==1.49.1
+beautifulsoup4==4.12.3
+lxml==5.3.0
+
+# ── Phase 9: review sentiment ────────────────────────────────────────────
+vaderSentiment==3.3.2
+
+# ── Phase 12: background jobs ────────────────────────────────────────────
+celery==5.6.3
+
+# ── HTTP client (LLM API calls, health checks) ──────────────────────────
+httpx==0.28.1
+
+# ── Testing ──────────────────────────────────────────────────────────────
+pytest==9.1.1
+pytest-asyncio==1.4.0

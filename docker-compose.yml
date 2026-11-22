@@ -1,0 +1,131 @@
+# Full local stack: PostgreSQL + Redis + FastAPI backend + Celery worker +
+# Celery beat + Next.js frontend.
+#
+# Usage:
+#   docker compose up -d --build
+#
+# Migrations run once via the one-shot `migrate` service before backend/
+# celery-worker/celery-beat start (they wait on it via
+# `service_completed_successfully`), rather than every container racing to
+# migrate on its own boot.
+#
+# The project also runs without Docker — see README.md.
+
+x-backend-env: &backend-env
+  ENVIRONMENT: production
+  DATABASE_URL: postgresql+psycopg://price_app:price_app_pw@postgres:5432/price_comparison
+  REDIS_URL: redis://redis:6379/0
+  CELERY_BROKER_URL: redis://redis:6379/1
+  CELERY_RESULT_BACKEND: redis://redis:6379/2
+  SECRET_KEY: change-this-to-a-long-random-string-in-production
+  MOCK_MODE: "true"
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: price_comparison_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: price_app
+      POSTGRES_PASSWORD: price_app_pw
+      POSTGRES_DB: price_comparison
+    ports:
+      # Host port 5435 (not 5432) to avoid clashing with a local Postgres install.
+      - "5435:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U price_app -d price_comparison"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: price_comparison_redis
+    restart: unless-stopped
+    ports:
+      # Host port 6381 (not 6379) to avoid clashing with a local Redis install.
+      - "6381:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  migrate:
+    build:
+      context: ./backend
+    container_name: price_comparison_migrate
+    restart: "no"
+    command: alembic upgrade head
+    environment:
+      <<: *backend-env
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  backend:
+    build:
+      context: ./backend
+    container_name: price_comparison_backend
+    restart: unless-stopped
+    environment:
+      <<: *backend-env
+      CORS_ORIGINS: http://localhost:3000
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
+  celery-worker:
+    build:
+      context: ./backend
+    container_name: price_comparison_celery_worker
+    restart: unless-stopped
+    command: celery -A app.workers.celery_app worker --loglevel=info
+    environment:
+      <<: *backend-env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
+  celery-beat:
+    build:
+      context: ./backend
+    container_name: price_comparison_celery_beat
+    restart: unless-stopped
+    command: celery -A app.workers.celery_app beat --loglevel=info
+    environment:
+      <<: *backend-env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        NEXT_PUBLIC_API_BASE_URL: http://localhost:8000/api
+    container_name: price_comparison_frontend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
